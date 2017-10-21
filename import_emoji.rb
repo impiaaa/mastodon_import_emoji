@@ -40,7 +40,7 @@ def usage
     puts "\ttwitchchannel [channel]"
     puts "\t\tImport the emotes available to subscribers of the given Twitch.tv"
     puts "\t\tchannel, or available to all if no channel is given"
-    puts "\ttwitchsubsriptions [username]"
+    puts "\ttwitchsubscriptions [username]"
     puts "\t\tImport the Twitch.tv emotes available to a user given their login"
     puts "\t\tname"
     puts "Examples:"
@@ -162,7 +162,7 @@ def make_twitch_request(uri)
     return res.body
 end
 
-def import_twitchsubsriptions
+def import_twitchsubscriptions
     username = ARGV.shift
     if username === nil then
         usage
@@ -223,8 +223,8 @@ elsif command == "twitchchannel" then
     import_twitchchannel
 elsif command == "steamprofile" then
     import_steamprofile
-elsif command == "twitchsubsriptions" then
-    import_twitchsubsriptions
+elsif command == "twitchsubscriptions" then
+    import_twitchsubscriptions
 else
     puts "Unknown command \"" + command + "\""
     usage
