@@ -5,6 +5,7 @@ require 'uri'
 def import_emoji(shortcode, uri)
     return if not $shortcode_match.match(shortcode)
     shortcode = shortcode.downcase() if $do_lowercase
+    shortcode = shortcode.gsub(/[^a-zA-Z0-9_]+/, "_")
     shortcode = $prefix + shortcode
     
     puts "Importing :" + shortcode + ":"
