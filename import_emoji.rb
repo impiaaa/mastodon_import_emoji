@@ -29,7 +29,7 @@ def usage
     puts "\t\tOnly import emoji with shortcodes that match the given regular"
     puts "\t\texpression"
     puts "\t--lower"
-    puts "\t\tConvert all shortcodes to lower case"
+    puts "\t\tConvert all shortcodes to lowercase"
     puts "Commands:"
     puts "\tsteamgame [appid|title]"
     puts "\t\tImport all emotes from a Steam game, either given its numeric"
@@ -43,6 +43,13 @@ def usage
     puts "\ttwitchsubsriptions [username]"
     puts "\t\tImport the Twitch.tv emotes available to a user given their login"
     puts "\t\tname"
+    puts "Examples:"
+    puts "\timport_emoji.rb --prefix tf steamgame 440"
+    puts "\t\tImport Steam emotes for Team Fortress 2, and add a \"tf\" prefix"
+    puts "\t\tto each shortcode"
+    puts "\timport_emoji.rb --match \"^[a-zA-Z0-9_]{2,}$\" --lower twitchchannel"
+    puts "\t\tImport Twitch.tv global emotes (but only with alphanumeric codes)"
+    puts "\t\tand make the codes lowercase"
 end
 
 def import_steam_emote(name)
