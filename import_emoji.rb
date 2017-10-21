@@ -39,6 +39,9 @@ def usage
     puts "\ttwitchchannel [channel]"
     puts "\t\tImport the emotes available to subscribers of the given Twitch.tv"
     puts "\t\tchannel, or available to all if no channel is given"
+    puts "\ttwitchsubsriptions [username]"
+    puts "\t\tImport the Twitch.tv emotes available to a user given their login"
+    puts "\t\tname"
 end
 
 def import_steam_emote(name)
@@ -137,6 +140,46 @@ def import_twitchchannel
     end
 end
 
+def make_twitch_request(uri)
+    req = Net::HTTP::Get.new(uri)
+    req["Accept"] = "application/vnd.twitchtv.v5+json"
+    # apparently it's ok if the client id is shared, e.g. in clients
+    # this one is mine, please don't abuse it
+    req["Client-ID"] = "n2vnimyk7llpld0f02b36xf2lnxv26"
+    
+    res = Net::HTTP.start(uri.hostname, uri.port, :use_ssl => true) do |http|
+        http.request(req)
+    end
+    
+    return res.body
+end
+
+def import_twitchsubsriptions
+    username = ARGV.shift
+    if username === nil then
+        usage
+        exit
+    end
+    
+    usersinfo = JSON.parse(make_twitch_request(URI("https://api.twitch.tv/kraken/users?login=#{username}")))
+    userid = usersinfo["users"][0]["_id"]
+    
+    emoticon_sets = JSON.parse(make_twitch_request(URI("https://api.twitch.tv/kraken/users/#{userid}/emotes")))["emoticon_sets"].values
+
+    Paperclip.options[:content_type_mappings] = {
+        '0': %w(image/png)
+    }
+
+    emoticon_sets.each do |emoticon_set|
+        emoticon_set.each do |emote|
+            shortcode = emote["code"]
+            uri = URI("https://static-cdn.jtvnw.net/emoticons/v1/#{emote["id"]}/3.0")
+            
+            import_emoji(shortcode, uri)
+        end
+    end
+end
+
 puts "Please only import emoji that you have permission to use!"
 
 $prefix = ""
@@ -172,6 +215,8 @@ elsif command == "twitchchannel" then
     import_twitchchannel
 elsif command == "steamprofile" then
     import_steamprofile
+elsif command == "twitchsubsriptions" then
+    import_twitchsubsriptions
 else
     puts "Unknown command \"" + command + "\""
     usage
