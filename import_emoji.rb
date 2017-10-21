@@ -33,9 +33,21 @@ def usage
     puts "\tsteamgame [appid|title]"
     puts "\t\tImport all emotes from a Steam game, either given its numeric"
     puts "\t\tAppID, or the (start of) the game name"
+    puts "\tsteamprofile [steam64id]"
+    puts "\t\tImport all Steam emotes available to a user given their profile"
+    puts "\t\tID (find that here: http://steamid.co/ )"
     puts "\ttwitchchannel [channel]"
     puts "\t\tImport the emotes available to subscribers of the given Twitch.tv"
     puts "\t\tchannel, or available to all if no channel is given"
+end
+
+def import_steam_emote(name)
+    firstcolonindex = name.index(":")
+    secondcolonindex = name.index(":", firstcolonindex+1)
+    shortcode = name[firstcolonindex+1, secondcolonindex-firstcolonindex-1]
+    uri = URI("http://cdn.steamcommunity.com/economy/emoticon/" + shortcode)
+
+    import_emoji(shortcode, uri)
 end
 
 def import_steamgame
@@ -56,13 +68,43 @@ def import_steamgame
         # really only do starts_with.
         if (steam_app_id != 0 and appid == steam_app_id) or \
                 steam_emote["game"].start_with?(steam_game) then
-            shortcode = steam_emote["name"]
-            firstcolonindex = shortcode.index(":")
-            secondcolonindex = shortcode.index(":", firstcolonindex+1)
-            shortcode = shortcode[firstcolonindex+1, secondcolonindex-firstcolonindex-1]
-            uri = URI("http://cdn.steamcommunity.com/economy/emoticon/" + shortcode)
+            import_steam_emote(steam_emote["name"])
+        end
+    end
+end
 
-            import_emoji(shortcode, uri)
+def import_steamprofile
+    profileid = ARGV.shift
+    if profileid === nil then
+        usage
+        exit
+    end
+    profileid = profileid.to_i
+    if profileid === 0 then
+        puts "Steam profile ID must be an integer. Get it here: http://steamid.co/"
+        usage
+        exit
+    end
+    
+    puts "Downloading inventory"
+    steam_inventory = JSON.parse(Net::HTTP.get(URI("http://steamcommunity.com/inventory/#{profileid}/753/6")))
+    
+    if steam_inventory["descriptions"] === nil then
+        puts "Error retrieving Steam inventory. Make sure the profile is public."
+        usage
+        exit
+    end
+    
+    steam_inventory["descriptions"].each do |inv_item|
+        item_class = nil
+        inv_item["tags"].each do |category|
+            if category["category"] === "item_class" then
+                item_class = category
+                break
+            end
+        end
+        if item_class != nil and item_class["internal_name"] == "item_class_4" then
+            import_steam_emote(inv_item["name"])
         end
     end
 end
@@ -128,6 +170,8 @@ if command == "steamgame" then
     import_steamgame
 elsif command == "twitchchannel" then
     import_twitchchannel
+elsif command == "steamprofile" then
+    import_steamprofile
 else
     puts "Unknown command \"" + command + "\""
     usage
