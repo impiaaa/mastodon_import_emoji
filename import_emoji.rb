@@ -4,6 +4,7 @@ require 'uri'
 
 def import_emoji(shortcode, uri)
     return if not $shortcode_match.match(shortcode)
+    shortcode = shortcode.downcase() if $do_lowercase
     shortcode = $prefix + shortcode
     
     puts "Importing :" + shortcode + ":"
@@ -26,6 +27,8 @@ def usage
     puts "\t--match [regexp]"
     puts "\t\tOnly import emoji with shortcodes that match the given regular"
     puts "\t\texpression"
+    puts "\t--lower"
+    puts "\t\tConvert all shortcodes to lower case"
     puts "Commands:"
     puts "\tsteamgame [appid|title]"
     puts "\t\tImport all emotes from a Steam game, either given its numeric"
@@ -97,17 +100,20 @@ puts "Please only import emoji that you have permission to use!"
 $prefix = ""
 $dbimport = true
 $shortcode_match = /.*/
+$do_lowercase = false
 while true do
     arg = ARGV.shift
     if arg === nil then
         usage
         exit
-    elsif arg === "--prefix" then
+    elsif arg == "--prefix" then
         $prefix = ARGV.shift
-    elsif arg === "--dry-run" then
+    elsif arg == "--dry-run" then
         $dbimport = false
-    elsif arg === "--match" then
+    elsif arg == "--match" then
         $shortcode_match = Regexp.new(ARGV.shift)
+    elsif arg == "--lower" then
+        $do_lowercase = true
     elsif arg.starts_with?("-") then
         puts "Unknown option \"" + arg + "\""
         usage
