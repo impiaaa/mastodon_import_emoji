@@ -1,11 +1,13 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require 'find'
 
-def import_emoji(shortcode, uri)
+def import_emoji(shortcode, image)
     return if not $shortcode_match.match(shortcode)
-    shortcode = shortcode.downcase() if $do_lowercase
-    shortcode = shortcode.gsub(/[^a-zA-Z0-9_]+/, "_")
+    shortcode.downcase! if $do_lowercase
+    shortcode.gsub!(/[^a-zA-Z0-9_]+/, "_")
+    shortcode.chomp!("_")
     shortcode = $prefix + shortcode
     
     puts "Importing :" + shortcode + ":"
@@ -13,7 +15,7 @@ def import_emoji(shortcode, uri)
     emoji = CustomEmoji.find_by(domain: nil, shortcode: shortcode)
     emoji.destroy if emoji != nil and $dbimport
     
-    emoji = CustomEmoji.new(domain: nil, shortcode: shortcode, image: uri)
+    emoji = CustomEmoji.new(domain: nil, shortcode: shortcode, image: image)
     emoji.save if $dbimport
 end
 
@@ -188,6 +190,31 @@ def import_twitchsubscriptions
     end
 end
 
+def import_files
+    rootpath = ARGV.shift
+    if rootpath === nil then
+        usage
+        exit
+    end
+    
+    Dir.mktmpdir do |tempdir|
+        Find.find(rootpath) do |path|
+            if not path.downcase.end_with?(".png") or\
+                    FileTest.directory?(path) then
+                next
+            end
+            
+            name = File.basename(path, ".*")
+            if name.start_with?(".") then
+                next
+            end
+            File.open(path) do |file|
+                import_emoji(name, file)
+            end
+        end
+    end
+end
+
 puts "Please only import emoji that you have permission to use!"
 
 $prefix = ""
@@ -207,7 +234,7 @@ while true do
         $shortcode_match = Regexp.new(ARGV.shift)
     elsif arg == "--lower" then
         $do_lowercase = true
-    elsif arg.starts_with?("-") then
+    elsif arg.start_with?("-") then
         puts "Unknown option \"" + arg + "\""
         usage
         exit
@@ -225,6 +252,8 @@ elsif command == "steamprofile" then
     import_steamprofile
 elsif command == "twitchsubscriptions" then
     import_twitchsubscriptions
+elsif command == "files" then
+    import_files
 else
     puts "Unknown command \"" + command + "\""
     usage
