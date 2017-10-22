@@ -45,6 +45,9 @@ def usage
     puts "\ttwitchsubscriptions [username]"
     puts "\t\tImport the Twitch.tv emotes available to a user given their login"
     puts "\t\tname"
+    puts "\tfile [path]"
+    puts "\t\tImport all PNG files in the given directory (recursive), using"
+    puts "\t\teach file name as a shortcode."
     puts "Examples:"
     puts "\timport_emoji.rb --prefix tf steamgame 440"
     puts "\t\tImport Steam emotes for Team Fortress 2, and add a \"tf\" prefix"
@@ -197,20 +200,18 @@ def import_files
         exit
     end
     
-    Dir.mktmpdir do |tempdir|
-        Find.find(rootpath) do |path|
-            if not path.downcase.end_with?(".png") or\
-                    FileTest.directory?(path) then
-                next
-            end
-            
-            name = File.basename(path, ".*")
-            if name.start_with?(".") then
-                next
-            end
-            File.open(path) do |file|
-                import_emoji(name, file)
-            end
+    Find.find(rootpath) do |path|
+        if not path.downcase.end_with?(".png") or\
+                FileTest.directory?(path) then
+            next
+        end
+        
+        name = File.basename(path, ".*")
+        if name.start_with?(".") then
+            next
+        end
+        File.open(path) do |file|
+            import_emoji(name, file)
         end
     end
 end
