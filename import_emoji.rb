@@ -54,6 +54,13 @@ def usage
     puts "\t\tat https://api.slack.com/apps/.../oauth and export it in the"
     puts "\t\tSLACK_API_TOKEN environment variable. Requires the"
     puts "\t\tslack-ruby-client gem to be installed."
+    puts "\tdiscord"
+    puts "\t\tImport all of the custom emoji from a Discord server. Get a bot"
+    puts "\t\ttoken at https://discordapp.com/developers/applications/me/..."
+    puts "\t\tand export it in the DISCORD_API_TOKEN environment variable, and"
+    puts "\t\tjoin the bot to your channel with the client ID here:"
+    puts "\t\thttps://discordapi.com/permissions.html#1073741824. Requires the"
+    puts "\t\tdiscordrb gem to be installed."
     puts "Examples:"
     puts "\timport_emoji.rb --prefix tf steamgame 440"
     puts "\t\tImport Steam emotes for Team Fortress 2, and add a \"tf\" prefix"
@@ -246,6 +253,22 @@ def import_slack
     end
 end
 
+def import_discord
+    require 'discordrb'
+    
+    raise 'Missing ENV[DISCORD_API_TOKEN]!' unless ENV['DISCORD_API_TOKEN']
+    bot = Discordrb::Bot.new token: ENV['DISCORD_API_TOKEN']
+    
+    bot.ready() do |event|
+        bot.emoji.each do |emoji|
+            import_emoji(emoji.name, URI(emoji.icon_url))
+        end
+        
+        exit
+    end
+    bot.run
+end
+
 puts "Please only import emoji that you have permission to use!"
 
 $prefix = ""
@@ -287,6 +310,8 @@ elsif command == "files" then
     import_files
 elsif command == "slack" then
     import_slack
+elsif command == "discord" then
+    import_discord
 else
     puts "Unknown command \"" + command + "\""
     usage

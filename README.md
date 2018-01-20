@@ -42,6 +42,14 @@
 	`SLACK_API_TOKEN` environment variable. Requires the
 	slack-ruby-client gem to be installed.
 
+`discord`
+	Import all of the custom emoji from a Discord server. Get a bot
+	token at https://discordapp.com/developers/applications/me/...
+	and export it in the DISCORD_API_TOKEN environment variable, and
+	join the bot to your channel with the client ID
+	[here](https://discordapi.com/permissions.html#1073741824).
+	Requires the discordrb gem to be installed.
+
 ### Examples
 `import_emoji.rb --prefix tf steamgame 440`
 	Import Steam emotes for Team Fortress 2, and add a "tf" prefix
