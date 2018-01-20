@@ -36,6 +36,12 @@
 	Import all PNG files in the given directory (recursive), using
 	each file name as a shortcode.
 
+`slack`
+	Import all of the custom emoji from a Slack team. Get an API key
+	at https://api.slack.com/apps/.../oauth and export it in the
+	`SLACK_API_TOKEN` environment variable. Requires the
+	slack-ruby-client gem to be installed.
+
 ### Examples
 `import_emoji.rb --prefix tf steamgame 440`
 	Import Steam emotes for Team Fortress 2, and add a "tf" prefix

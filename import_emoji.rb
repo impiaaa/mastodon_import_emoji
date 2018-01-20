@@ -5,6 +5,7 @@ require 'find'
 
 def import_emoji(shortcode, image)
     return if not $shortcode_match.match(shortcode)
+    shortcode = shortcode.dup
     shortcode.downcase! if $do_lowercase
     shortcode.gsub!(/[^a-zA-Z0-9_]+/, "_")
     shortcode.chomp!("_")
@@ -48,6 +49,11 @@ def usage
     puts "\tfile [path]"
     puts "\t\tImport all PNG files in the given directory (recursive), using"
     puts "\t\teach file name as a shortcode."
+    puts "\tslack"
+    puts "\t\tImport all of the custom emoji from a Slack team. Get an API key"
+    puts "\t\tat https://api.slack.com/apps/.../oauth and export it in the"
+    puts "\t\tSLACK_API_TOKEN environment variable. Requires the"
+    puts "\t\tslack-ruby-client gem to be installed."
     puts "Examples:"
     puts "\timport_emoji.rb --prefix tf steamgame 440"
     puts "\t\tImport Steam emotes for Team Fortress 2, and add a \"tf\" prefix"
@@ -216,6 +222,30 @@ def import_files
     end
 end
 
+def import_slack
+    require 'slack-ruby-client'
+
+    Slack.configure do |config|
+        config.token = ENV['SLACK_API_TOKEN']
+        raise 'Missing ENV[SLACK_API_TOKEN]!' unless config.token
+    end
+
+    client = Slack::Web::Client.new
+    emoji = client.emoji_list.emoji
+
+    emoji.each do |shortcode, url|
+        if url.start_with?("alias:") then
+            newShortcode = url[6, url.length-6]
+            url = emoji[newShortcode]
+            if url === nil then
+                next
+            end
+        end
+        puts shortcode, url
+        import_emoji(shortcode, URI(url))
+    end
+end
+
 puts "Please only import emoji that you have permission to use!"
 
 $prefix = ""
@@ -255,6 +285,8 @@ elsif command == "twitchsubscriptions" then
     import_twitchsubscriptions
 elsif command == "files" then
     import_files
+elsif command == "slack" then
+    import_slack
 else
     puts "Unknown command \"" + command + "\""
     usage
