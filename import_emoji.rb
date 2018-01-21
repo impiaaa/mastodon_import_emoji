@@ -2,6 +2,33 @@ require 'net/http'
 require 'json'
 require 'uri'
 require 'find'
+require 'paperclip'
+
+class EmojiCropper < Paperclip::Thumbnail
+    def initialize(file, options = {}, attachment = nil)
+        super
+        
+        targetwidth = [@current_geometry.width, options[:cropsize_x]].max
+        targetheight = [@current_geometry.height, options[:cropsize_y]].max
+        if options[:cropsquare] then
+            targetwidth = targetheight = [targetwidth, targetheight].max
+        end
+        
+        @target_geometry = Paperclip::Geometry.new(targetwidth, targetheight)
+    end
+    
+    def transformation_command
+        crop = @target_geometry.to_s
+        trans = []
+        trans << "-coalesce" if animated?
+        trans << "-auto-orient" if auto_orient
+        trans << "-background" << "transparent"
+        trans << "-gravity" << "center"
+        trans << "-extent" << %["#{crop}"] << "+repage" if crop
+        trans << '-layers "optimize"' if animated?
+        trans
+    end
+end
 
 def import_emoji(shortcode, image)
     return if not $shortcode_match.match(shortcode)
@@ -10,6 +37,12 @@ def import_emoji(shortcode, image)
     shortcode.gsub!(/[^a-zA-Z0-9_]+/, "_")
     shortcode.chomp!("_")
     shortcode = $prefix + shortcode
+    
+    if $cropsize_x > 0 or $cropsize_y > 0 or $cropsquare then
+        adapter = Paperclip.io_adapters.for(image)
+        processor = EmojiCropper.new(adapter, {cropsize_x: $cropsize_x, cropsize_y: $cropsize_y, cropsquare: $cropsquare})
+        image = processor.make()
+    end
     
     puts "Importing :" + shortcode + ":"
     
@@ -280,6 +313,9 @@ $prefix = ""
 $dbimport = true
 $shortcode_match = /.*/
 $do_lowercase = false
+$cropsize_x = 0
+$cropsize_y = 0
+$cropsquare = false
 while true do
     arg = ARGV.shift
     if arg === nil then
@@ -293,6 +329,12 @@ while true do
         $shortcode_match = Regexp.new(ARGV.shift)
     elsif arg == "--lower" then
         $do_lowercase = true
+    elsif arg == "--square" then
+        $cropsquare = true
+    elsif arg == "--minsize" then
+        g = Paperclip::Geometry.parse(ARGV.shift)
+        $cropsize_x = g.width
+        $cropsize_y = g.height
     elsif arg.start_with?("-") then
         puts "Unknown option \"" + arg + "\""
         usage
