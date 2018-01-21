@@ -260,8 +260,13 @@ def import_discord
     bot = Discordrb::Bot.new token: ENV['DISCORD_API_TOKEN']
     
     bot.ready() do |event|
-        bot.emoji.each do |emoji|
-            import_emoji(emoji.name, URI(emoji.icon_url))
+        begin
+            bot.emoji.each do |emoji|
+                import_emoji(emoji.name, URI(emoji.icon_url))
+            end
+        rescue Exception => e
+            puts e.message
+            puts e.backtrace.inspect
         end
         
         exit
