@@ -15,6 +15,13 @@
 `--lower`
 	Convert all shortcodes to lowercase
 
+`--square`
+	Add padding to images to ensure a 1:1 aspect ratio
+
+`--minsize`
+	Images smaller than this size (format WxH) are padded to be this
+	size
+
 ### Commands
 `steamgame [appid|title]`
 	Import all emotes from a Steam game, either given its numeric
@@ -45,15 +52,15 @@
 `discord`
 	Import all of the custom emoji from a Discord server. Get a bot
 	token at https://discordapp.com/developers/applications/me/...
-	and export it in the DISCORD_API_TOKEN environment variable, and
+	and export it in the `DISCORD_API_TOKEN` environment variable, and
 	join the bot to your channel with the client ID
 	[here](https://discordapi.com/permissions.html#1073741824).
 	Requires the discordrb gem to be installed.
 
 ### Examples
-`import_emoji.rb --prefix tf steamgame 440`
-	Import Steam emotes for Team Fortress 2, and add a "tf" prefix
-	to each shortcode
+`import_emoji.rb --prefix tf --minsize 20x20 steamgame 440`
+	Import Steam emotes for Team Fortress 2, and add a "tf" prefix to
+	each shortcode, and expand each image to 20x20 pixels
 
 `import_emoji.rb --match "^[a-zA-Z0-9_]{2,}$" --lower twitchchannel`
 	Import Twitch.tv global emotes (but only with alphanumeric codes)
