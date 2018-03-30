@@ -127,6 +127,7 @@ def import_steamgame
 
     puts "Downloading Steam emote list"
     steam_emote_list = JSON.parse(Net::HTTP.get(URI("http://cdn.steam.tools/data/emote.json")))
+
     steam_emote_list.each do |steam_emote|
         appid = steam_emote["url"].split("-")[0]
         appid = appid[4,appid.length-4].to_i
@@ -348,6 +349,11 @@ while true do
         command = arg
         break
     end
+end
+
+begin
+    Paperclip::UriAdapter.register
+rescue NoMethodError
 end
 
 if command == "steamgame" then
