@@ -76,16 +76,17 @@ def usage
     puts "Commands:"
     puts "\tsteamgame [appid|title]"
     puts "\t\tImport all emotes from a Steam game, either given its numeric"
-    puts "\t\tAppID, or the (start of) the game name"
+    puts "\t\tAppID, or the (start of) the game name. Requires the nokogiri"
+    puts "\t\tRuby gem."
     puts "\tsteamprofile [steam64id]"
     puts "\t\tImport all Steam emotes available to a user given their profile"
-    puts "\t\tID (find that here: http://steamid.co/ )"
+    puts "\t\tID (find that here: http://steamid.co/ )."
     puts "\ttwitchchannel [channel]"
     puts "\t\tImport the emotes available to subscribers of the given"
-    puts "\t\tTwitch.tv channel, or available to all if no channel is given"
+    puts "\t\tTwitch.tv channel, or available to all if no channel is given."
     puts "\ttwitchsubscriptions [username]"
     puts "\t\tImport the Twitch.tv emotes available to a user given their"
-    puts "\t\tlogin name"
+    puts "\t\tlogin name."
     puts "\tfiles [path]"
     puts "\t\tImport all PNG files in the given directory (recursive), using"
     puts "\t\teach file name as a shortcode."
@@ -93,24 +94,24 @@ def usage
     puts "\t\tImport all of the custom emoji from a Slack team. Get an API key"
     puts "\t\tat https://api.slack.com/apps/.../oauth and export it in the"
     puts "\t\tSLACK_API_TOKEN environment variable. Requires the"
-    puts "\t\tslack-ruby-client gem to be installed."
+    puts "\t\tslack-ruby-client gem."
     puts "\tdiscord"
     puts "\t\tImport all of the custom emoji from a Discord server. Get a bot"
     puts "\t\ttoken at https://discordapp.com/developers/applications/me/..."
     puts "\t\tand export it in the DISCORD_API_TOKEN environment variable, and"
     puts "\t\tjoin the bot to your channel with the client ID here:"
     puts "\t\thttps://discordapi.com/permissions.html#1073741824. Requires the"
-    puts "\t\tdiscordrb gem to be installed."
+    puts "\t\tdiscordrb gem."
     puts "\tmastodon [base url]"
     puts "\t\tCopy all custom emoji from an existing Mastodon instance, via"
     puts "\t\tits public API."
     puts "Examples:"
     puts "\timport_emoji.rb --prefix tf --minsize 20x20 steamgame 440"
     puts "\t\tImport Steam emotes for Team Fortress 2, add a \"tf\" prefix to"
-    puts "\t\teach shortcode, and expand each image to 20x20 pixels"
+    puts "\t\teach shortcode, and expand each image to 20x20 pixels."
     puts "\timport_emoji.rb --match \"^[a-zA-Z0-9_]{2,}$\" --lower twitchchannel"
     puts "\t\tImport Twitch.tv global emotes (but only with alphanumeric"
-    puts "\t\tcodes) and make the codes lowercase"
+    puts "\t\tcodes) and make the codes lowercase."
     puts "\timport_emoji.rb --hide files monstrous_specification_0.1.0_png64/emoji/"
 	puts "\t\tImport all emoji from the (downloaded and extracted) Monstrous"
     puts "\t\tSpecification emoji set, but hide them from the picker."
@@ -126,26 +127,21 @@ def import_steam_emote(name)
 end
 
 def import_steamgame
+    require 'nokogiri'
+    require 'open-uri'
+    
     steam_game = ARGV.shift
     if steam_game === nil then
         usage
         exit
     end
     steam_app_id = steam_game.to_i
-
-    puts "Downloading Steam emote list"
-    steam_emote_list = JSON.parse(Net::HTTP.get(URI("http://cdn.steam.tools/data/emote.json")))
-
-    steam_emote_list.each do |steam_emote|
-        appid = steam_emote["url"].split("-")[0]
-        appid = appid[4,appid.length-4].to_i
-        
-        # Unfortunately, the "game" includes the rarity qualifier, so we can
-        # really only do start_with.
-        if (steam_app_id != 0 and appid == steam_app_id) or \
-                steam_emote["game"].start_with?(steam_game) then
-            import_steam_emote(steam_emote["name"])
-        end
+    
+    puts "Loading Steam Community Market search"
+    search_page = Nokogiri::HTML(open("http://steamcommunity.com/market/search?category_753_Game[]=tag_app_#{steam_app_id}&category_753_item_class[]=tag_item_class_4&appid=753"))
+    
+    search_page.css('.market_listing_item_name').each do |item_name_el|
+        import_steam_emote(item_name_el.content)
     end
 end
 

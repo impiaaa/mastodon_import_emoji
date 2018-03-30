@@ -30,19 +30,20 @@
 ### Commands
 `steamgame [appid|title]`
 	Import all emotes from a Steam game, either given its numeric
-	AppID, or the (start of) the game name
+	AppID, or the (start of) the game name. Requires the nokogiri
+	Ruby gem.
 
 `steamprofile [steam64id]`
 	Import all Steam emotes available to a user given their profile
-	ID (find that [here](http://steamid.co/))
+	ID (find that [here](http://steamid.co/)).
 
 `twitchchannel [channel]`
 	Import the emotes available to subscribers of the given Twitch.tv
-	channel, or available to all if no channel is given
+	channel, or available to all if no channel is given.
 
 `twitchsubscriptions [username]`
 	Import the Twitch.tv emotes available to a user given their login
-	name
+	name.
 
 `files [path]`
 	Import all PNG files in the given directory (recursive), using
@@ -52,7 +53,7 @@
 	Import all of the custom emoji from a Slack team. Get an API key
 	at https://api.slack.com/apps/.../oauth and export it in the
 	`SLACK_API_TOKEN` environment variable. Requires the
-	slack-ruby-client gem to be installed.
+	slack-ruby-client gem.
 
 `discord`
 	Import all of the custom emoji from a Discord server. Get a bot
@@ -60,7 +61,7 @@
 	and export it in the `DISCORD_API_TOKEN` environment variable, and
 	join the bot to your channel with the client ID
 	[here](https://discordapi.com/permissions.html#1073741824).
-	Requires the discordrb gem to be installed.
+	Requires the discordrb gem.
 
 `mastodon [base url]`
 	Copy all custom emoji from an existing Mastodon instance, via
