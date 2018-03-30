@@ -57,6 +57,10 @@
 	[here](https://discordapi.com/permissions.html#1073741824).
 	Requires the discordrb gem to be installed.
 
+`mastodon [base url]`
+	Copy all custom emoji from an existing Mastodon instance, via
+	its public API.
+
 ### Examples
 `import_emoji.rb --prefix tf --minsize 20x20 steamgame 440`
 	Import Steam emotes for Team Fortress 2, and add a "tf" prefix to
