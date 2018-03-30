@@ -1,6 +1,8 @@
 # Mastodon custom emoji importer
+
 ## Usage
 `bundle exec rails runner import_emoji.rb [options] [command]`
+
 ### Options
 `--prefix [prefix]`
 	Prefix shortcodes of all imported emoji with a string
@@ -21,6 +23,9 @@
 `--minsize`
 	Images smaller than this size (format WxH) are padded to be this
 	size
+
+`--hide`
+	Hide imported emoji from the emoji picker
 
 ### Commands
 `steamgame [appid|title]`
@@ -69,3 +74,7 @@
 `import_emoji.rb --match "^[a-zA-Z0-9_]{2,}$" --lower twitchchannel`
 	Import Twitch.tv global emotes (but only with alphanumeric codes)
 	and make the codes lowercase
+
+`import_emoji.rb --hide files monstrous_specification_0.1.0_png64/emoji/`
+	Import all emoji from the (downloaded and extracted) Monstrous
+	Specification emoji set, but hide them from the picker by default.

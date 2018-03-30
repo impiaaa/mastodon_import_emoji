@@ -49,7 +49,7 @@ def import_emoji(shortcode, image)
     emoji = CustomEmoji.find_by(domain: nil, shortcode: shortcode)
     emoji.destroy if emoji != nil and $dbimport
     
-    emoji = CustomEmoji.new(domain: nil, shortcode: shortcode, image: image)
+    emoji = CustomEmoji.new(domain: nil, shortcode: shortcode, image: image, visible_in_picker: $visible_in_picker)
     emoji.save if $dbimport
 end
 
@@ -71,6 +71,8 @@ def usage
     puts "\t--minsize"
     puts "\t\tImages smaller than this size (format WxH) are padded to be this"
     puts "\t\t size"
+    puts "\t--hide"
+    puts "\t\tHide imported emoji from the emoji picker"
     puts "Commands:"
     puts "\tsteamgame [appid|title]"
     puts "\t\tImport all emotes from a Steam game, either given its numeric"
@@ -109,6 +111,9 @@ def usage
     puts "\timport_emoji.rb --match \"^[a-zA-Z0-9_]{2,}$\" --lower twitchchannel"
     puts "\t\tImport Twitch.tv global emotes (but only with alphanumeric"
     puts "\t\tcodes) and make the codes lowercase"
+    puts "\timport_emoji.rb --hide files monstrous_specification_0.1.0_png64/emoji/"
+	puts "\t\tImport all emoji from the (downloaded and extracted) Monstrous"
+    puts "\t\tSpecification emoji set, but hide them from the picker."
 end
 
 def import_steam_emote(name)
@@ -348,6 +353,7 @@ $do_lowercase = false
 $cropsize_x = 0
 $cropsize_y = 0
 $cropsquare = false
+$visible_in_picker = true
 while true do
     arg = ARGV.shift
     if arg === nil then
@@ -367,6 +373,8 @@ while true do
         g = Paperclip::Geometry.parse(ARGV.shift)
         $cropsize_x = g.width
         $cropsize_y = g.height
+    elsif arg == "--hide" then
+        $visible_in_picker = false
     elsif arg.start_with?("-") then
         puts "Unknown option \"" + arg + "\""
         usage
