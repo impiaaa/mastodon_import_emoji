@@ -79,11 +79,11 @@ def usage
     puts "\t\tImport all Steam emotes available to a user given their profile"
     puts "\t\tID (find that here: http://steamid.co/ )"
     puts "\ttwitchchannel [channel]"
-    puts "\t\tImport the emotes available to subscribers of the given Twitch.tv"
-    puts "\t\tchannel, or available to all if no channel is given"
+    puts "\t\tImport the emotes available to subscribers of the given"
+    puts "\t\tTwitch.tv channel, or available to all if no channel is given"
     puts "\ttwitchsubscriptions [username]"
-    puts "\t\tImport the Twitch.tv emotes available to a user given their login"
-    puts "\t\tname"
+    puts "\t\tImport the Twitch.tv emotes available to a user given their"
+    puts "\t\tlogin name"
     puts "\tfile [path]"
     puts "\t\tImport all PNG files in the given directory (recursive), using"
     puts "\t\teach file name as a shortcode."
@@ -99,13 +99,16 @@ def usage
     puts "\t\tjoin the bot to your channel with the client ID here:"
     puts "\t\thttps://discordapi.com/permissions.html#1073741824. Requires the"
     puts "\t\tdiscordrb gem to be installed."
+    puts "\tmastodon [base url]"
+    puts "\t\tCopy all custom emoji from an existing Mastodon instance, via"
+    puts "\t\tits public API."
     puts "Examples:"
     puts "\timport_emoji.rb --prefix tf --minsize 20x20 steamgame 440"
     puts "\t\tImport Steam emotes for Team Fortress 2, add a \"tf\" prefix to"
     puts "\t\teach shortcode, and expand each image to 20x20 pixels"
     puts "\timport_emoji.rb --match \"^[a-zA-Z0-9_]{2,}$\" --lower twitchchannel"
-    puts "\t\tImport Twitch.tv global emotes (but only with alphanumeric codes)"
-    puts "\t\tand make the codes lowercase"
+    puts "\t\tImport Twitch.tv global emotes (but only with alphanumeric"
+    puts "\t\tcodes) and make the codes lowercase"
 end
 
 def import_steam_emote(name)
@@ -133,7 +136,7 @@ def import_steamgame
         appid = appid[4,appid.length-4].to_i
         
         # Unfortunately, the "game" includes the rarity qualifier, so we can
-        # really only do starts_with.
+        # really only do start_with.
         if (steam_app_id != 0 and appid == steam_app_id) or \
                 steam_emote["game"].start_with?(steam_game) then
             import_steam_emote(steam_emote["name"])
@@ -313,6 +316,29 @@ def import_discord
     bot.run
 end
 
+def import_mastodon
+    instance = ARGV.shift
+    if instance === nil then
+        usage
+        exit
+    end
+    if not instance.start_with?("http://") and not instance.start_with?("https://")
+        instance = "https://" + instance
+    end
+    baseuri = URI(instance)
+    if baseuri === nil then
+        usage
+        exit
+    end
+
+    puts "Downloading custom emoji for ", baseuri
+    emojiuri = baseuri + "/api/v1/custom_emojis"
+    emoji_list = JSON.parse(Net::HTTP.get(emojiuri))
+    emoji_list.each do |emoji|
+        import_emoji(emoji["shortcode"], URI(emoji["url"]))
+    end
+end
+
 puts "Please only import emoji that you have permission to use!"
 
 $prefix = ""
@@ -370,6 +396,8 @@ elsif command == "slack" then
     import_slack
 elsif command == "discord" then
     import_discord
+elsif command == "mastodon" then
+    import_mastodon
 else
     puts "Unknown command \"" + command + "\""
     usage
