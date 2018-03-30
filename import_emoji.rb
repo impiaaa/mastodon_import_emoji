@@ -84,7 +84,7 @@ def usage
     puts "\ttwitchsubscriptions [username]"
     puts "\t\tImport the Twitch.tv emotes available to a user given their"
     puts "\t\tlogin name"
-    puts "\tfile [path]"
+    puts "\tfiles [path]"
     puts "\t\tImport all PNG files in the given directory (recursive), using"
     puts "\t\teach file name as a shortcode."
     puts "\tslack"

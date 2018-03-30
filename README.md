@@ -39,7 +39,7 @@
 	Import the Twitch.tv emotes available to a user given their login
 	name
 
-`file [path]`
+`files [path]`
 	Import all PNG files in the given directory (recursive), using
 	each file name as a shortcode.
 
