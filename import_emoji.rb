@@ -36,18 +36,18 @@ def import_emoji(shortcode, image)
         return
     end
     
+    shortcode = shortcode.dup
+    shortcode.downcase! if $do_lowercase
+    shortcode.gsub!(/[^a-zA-Z0-9_]+/, "_")
+    shortcode.chomp!("_")
+    shortcode = $prefix + shortcode
+    
     emoji = CustomEmoji.find_by(domain: nil, shortcode: shortcode)
     
     if emoji != nil and not $delete_existing then
         puts "Skipping :" + shortcode + ": (already exists)"
         return
     end
-    
-    shortcode = shortcode.dup
-    shortcode.downcase! if $do_lowercase
-    shortcode.gsub!(/[^a-zA-Z0-9_]+/, "_")
-    shortcode.chomp!("_")
-    shortcode = $prefix + shortcode
     
     if $cropsize_x > 0 or $cropsize_y > 0 or $cropsquare then
         adapter = Paperclip.io_adapters.for(image)
