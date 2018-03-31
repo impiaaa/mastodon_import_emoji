@@ -27,6 +27,12 @@
 `--hide`
 	Hide imported emoji from the emoji picker
 
+`--no-overwriting`
+	By default, the script will remove any custom emoji with the
+	same shortcode as a new one before adding the new one. This
+	disables that functionality, and will not import any
+	emoji with conflicting shortcodes.
+
 ### Commands
 `steamgame [appid|title]`
 	Import all emotes from a Steam game, either given its numeric

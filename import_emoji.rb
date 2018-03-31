@@ -31,7 +31,18 @@ class EmojiCropper < Paperclip::Thumbnail
 end
 
 def import_emoji(shortcode, image)
-    return if not $shortcode_match.match(shortcode)
+    if not $shortcode_match.match(shortcode) then
+        puts "Skipping :" + shortcode + ": (does not match regex filter)"
+        return
+    end
+    
+    emoji = CustomEmoji.find_by(domain: nil, shortcode: shortcode)
+    
+    if emoji != nil and not $delete_existing then
+        puts "Skipping :" + shortcode + ": (already exists)"
+        return
+    end
+    
     shortcode = shortcode.dup
     shortcode.downcase! if $do_lowercase
     shortcode.gsub!(/[^a-zA-Z0-9_]+/, "_")
@@ -46,7 +57,6 @@ def import_emoji(shortcode, image)
     
     puts "Importing :" + shortcode + ":"
     
-    emoji = CustomEmoji.find_by(domain: nil, shortcode: shortcode)
     emoji.destroy if emoji != nil and $dbimport
     
     emoji = CustomEmoji.new(domain: nil, shortcode: shortcode, image: image, visible_in_picker: $visible_in_picker)
@@ -73,6 +83,11 @@ def usage
     puts "\t\t size"
     puts "\t--hide"
     puts "\t\tHide imported emoji from the emoji picker"
+    puts "\t--no-overwriting"
+    puts "\t\tBy default, the script will remove any custom emoji with the"
+    puts "\t\tsame shortcode as a new one before adding the new one. This"
+    puts "\t\tdisables that functionality, and will not import any"
+    puts "\t\temoji with conflicting shortcodes."
     puts "Commands:"
     puts "\tsteamgame [appid|title]"
     puts "\t\tImport all emotes from a Steam game, either given its numeric"
@@ -350,6 +365,7 @@ $cropsize_x = 0
 $cropsize_y = 0
 $cropsquare = false
 $visible_in_picker = true
+$delete_existing = true
 while true do
     arg = ARGV.shift
     if arg === nil then
@@ -371,6 +387,8 @@ while true do
         $cropsize_y = g.height
     elsif arg == "--hide" then
         $visible_in_picker = false
+    elsif arg == "--no-overwriting" then
+        $delete_existing = false
     elsif arg.start_with?("-") then
         puts "Unknown option \"" + arg + "\""
         usage
