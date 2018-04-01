@@ -83,9 +83,9 @@ def import_emoji(shortcode, image)
                   cropsize_y: $cropsize_y,
                   cropsquare: $cropsquare}
     processor = EmojiCropper.new(adapter, parameters)
-    if $cropsize_x > 0 or $cropsize_y > 0 or $cropsquare or not processor.identified_as_png? then
-        image = processor.make()
-    end
+    #if $cropsize_x > 0 or $cropsize_y > 0 or $cropsquare or not processor.identified_as_png? then
+    image = processor.make()
+    #end
     
     if $convert_gif then
         adapter = Paperclip.io_adapters.for(image)
