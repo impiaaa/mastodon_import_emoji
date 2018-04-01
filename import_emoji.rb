@@ -32,6 +32,17 @@ class EmojiCropper < Paperclip::Thumbnail
         trans << '-layers "optimize"' if animated?
         trans
     end
+
+    def identified_as_png?
+      if @identified_as_png.nil?
+        @identified_as_png = %w(png).include? identify("-format %m :file", :file => "#{@file.path}[0]").to_s.downcase.strip
+      end
+      @identified_as_png
+    rescue Cocaine::ExitStatusError => e
+      raise Paperclip::Error, "There was an error running `identify` for #{@basename}" if @whiny
+    rescue Cocaine::CommandNotFoundError => e
+      raise Paperclip::Errors::CommandNotFoundError.new("Could not run the `identify` command. Please install ImageMagick.")
+    end
 end
 
 class GifToPng < Paperclip::Thumbnail
@@ -72,7 +83,9 @@ def import_emoji(shortcode, image)
                   cropsize_y: $cropsize_y,
                   cropsquare: $cropsquare}
     processor = EmojiCropper.new(adapter, parameters)
-    image = processor.make()
+    if $cropsize_x > 0 or $cropsize_y > 0 or $cropsquare or not processor.identified_as_png? then
+        image = processor.make()
+    end
     
     if $convert_gif then
         adapter = Paperclip.io_adapters.for(image)
