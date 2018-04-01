@@ -15,6 +15,10 @@ class EmojiCropper < Paperclip::Thumbnail
         end
         
         @target_geometry = Paperclip::Geometry.new(targetwidth, targetheight)
+        
+        if not identified_as_animated? or not $convert_gif then
+            @format = "png"
+        end
     end
     
     def transformation_command
@@ -27,6 +31,20 @@ class EmojiCropper < Paperclip::Thumbnail
         trans << "-extent" << %["#{crop}"] << "+repage" if crop
         trans << '-layers "optimize"' if animated?
         trans
+    end
+end
+
+class GifToPng < Paperclip::Thumbnail
+    def make
+        src = @file
+        if identified_as_animated? then
+            Paperclip.run('gif2apng',
+                          ":source",
+                          source: File.expand_path(src.path))
+            File.open([File.expand_path(src.path), ".png"].join)
+        else
+            src
+        end
     end
 end
 
@@ -49,9 +67,16 @@ def import_emoji(shortcode, image)
         return
     end
     
-    if $cropsize_x > 0 or $cropsize_y > 0 or $cropsquare then
+    adapter = Paperclip.io_adapters.for(image)
+    parameters = {cropsize_x: $cropsize_x,
+                  cropsize_y: $cropsize_y,
+                  cropsquare: $cropsquare}
+    processor = EmojiCropper.new(adapter, parameters)
+    image = processor.make()
+    
+    if $convert_gif then
         adapter = Paperclip.io_adapters.for(image)
-        processor = EmojiCropper.new(adapter, {cropsize_x: $cropsize_x, cropsize_y: $cropsize_y, cropsquare: $cropsquare})
+        processor = GifToPng.new(adapter)
         image = processor.make()
     end
     
@@ -88,6 +113,9 @@ def usage
     puts "\t\tsame shortcode as a new one before adding the new one. This"
     puts "\t\tdisables that functionality, and will not import any"
     puts "\t\temoji with conflicting shortcodes."
+    puts "\t--convert-gif"
+    puts "\t\tConvert animated GIF to animated PNG. Requires gif2apng to be"
+    puts "\t\tinstalled."
     puts "Commands:"
     puts "\tsteamgame [appid|title]"
     puts "\t\tImport all emotes from a Steam game, either given its numeric"
@@ -272,8 +300,7 @@ def import_files
     end
     
     Find.find(rootpath) do |path|
-        if not path.downcase.end_with?(".png") or\
-                FileTest.directory?(path) then
+        if FileTest.directory?(path) then
             next
         end
         
@@ -283,6 +310,8 @@ def import_files
         end
         File.open(path) do |file|
             import_emoji(name, file)
+        rescue Paperclip::Errors::NotIdentifiedByImageMagickError
+            next
         end
     end
 end
@@ -366,6 +395,7 @@ $cropsize_y = 0
 $cropsquare = false
 $visible_in_picker = true
 $delete_existing = true
+$convert_gif = false
 while true do
     arg = ARGV.shift
     if arg === nil then
@@ -389,6 +419,8 @@ while true do
         $visible_in_picker = false
     elsif arg == "--no-overwriting" then
         $delete_existing = false
+    elsif arg == "--convert-gif" then
+        $convert_gif = true
     elsif arg.start_with?("-") then
         puts "Unknown option \"" + arg + "\""
         usage

@@ -33,6 +33,10 @@
 	disables that functionality, and will not import any
 	emoji with conflicting shortcodes.
 
+`--convert-gif`
+	Convert animated GIF to animated PNG. Requires gif2apng to be
+	installed.
+
 ### Commands
 `steamgame [appid|title]`
 	Import all emotes from a Steam game, either given its numeric
