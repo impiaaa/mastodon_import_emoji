@@ -3,6 +3,7 @@ require 'json'
 require 'uri'
 require 'find'
 require 'paperclip'
+require 'date'
 
 class EmojiCropper < Paperclip::Thumbnail
     def initialize(file, options = {}, attachment = nil)
@@ -161,6 +162,9 @@ def usage
     puts "\tmastodon [base url]"
     puts "\t\tCopy all custom emoji from an existing Mastodon instance, via"
     puts "\t\tits public API."
+    puts "\thashflags [time]"
+    puts "\t\tImport all Twitter promoted hashtag emoji, limited to campaigns"
+    puts "\t\tactive at the given date and time, or now if no time is given."
     puts "Examples:"
     puts "\timport_emoji.rb --prefix tf --minsize 20x20 steamgame 440"
     puts "\t\tImport Steam emotes for Team Fortress 2, add a \"tf\" prefix to"
@@ -397,6 +401,24 @@ def import_mastodon
     end
 end
 
+def import_hashflags
+    inptime = ARGV.shift
+    if inptime === nil then
+        search_time = DateTime.now()
+    else
+        search_time = DateTime.parse(inptime)
+    end
+    hashflaguri = URI(search_time.strftime("https://ton.twimg.com/hashflag/config-%Y-%m-%d-%H.json"))
+    hashflag_list = JSON.parse(Net::HTTP.get(hashflaguri))
+    hashflag_list.each do |hashflag|
+        # Not sure this is necessary?
+        if search_time >= DateTime.strptime(hashflag["startingTimestampMs"], "%Q") and \
+           search_time <= DateTime.strptime(hashflag["endingTimestampMs"], "%Q") then
+            import_emoji(hashflag["hashtag"], URI(hashflag["assetUrl"]))
+        end
+    end
+end
+
 puts "Please only import emoji that you have permission to use!"
 
 $prefix = ""
@@ -465,6 +487,8 @@ elsif command == "discord" then
     import_discord
 elsif command == "mastodon" then
     import_mastodon
+elsif command == "hashflags" then
+    import_hashflags
 else
     puts "Unknown command \"" + command + "\""
     usage

@@ -77,6 +77,10 @@
 	Copy all custom emoji from an existing Mastodon instance, via
 	its public API.
 
+`hashflags [time]`
+	Import all Twitter promoted hashtag emoji, limited to campaigns
+	active at the given date and time, or now if no time is given.
+
 ### Examples
 `import_emoji.rb --prefix tf --minsize 20x20 steamgame 440`
 	Import Steam emotes for Team Fortress 2, and add a "tf" prefix to
