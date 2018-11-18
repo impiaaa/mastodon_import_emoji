@@ -105,6 +105,7 @@ end
 
 def usage
     puts "Usage:"
+    puts "\tRun from inside your Mastodon (\"live\") directory:"
     puts "\tbundle exec rails runner import_emoji.rb [options] [command]"
     puts "Options:"
     puts "\t--prefix [prefix]"
@@ -168,6 +169,7 @@ def usage
     puts "\t\tactive at the given date and time, or now if no time is given."
     puts "\temojipack [path or url]"
     puts "\t\tImport an \"emojipack\" YAML from the given URL or file path."
+    puts "\t\tRequires the safe_yaml gem."
     puts "Examples:"
     puts "\timport_emoji.rb --prefix tf --minsize 20x20 steamgame 440"
     puts "\t\tImport Steam emotes for Team Fortress 2, add a \"tf\" prefix to"

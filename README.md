@@ -1,6 +1,7 @@
 # Mastodon custom emoji importer
 
 ## Usage
+Run from inside your Mastodon ("live") directory:
 `bundle exec rails runner import_emoji.rb [options] [command]`
 
 ### Options
@@ -83,6 +84,7 @@
 
 `emojipack [path or url]`
 	Import an "emojipack" YAML from the given URL or file path.
+	Requires the safe_yaml gem.
 
 ### Examples
 `import_emoji.rb --prefix tf --minsize 20x20 steamgame 440`
