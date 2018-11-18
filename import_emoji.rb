@@ -4,6 +4,7 @@ require 'uri'
 require 'find'
 require 'paperclip'
 require 'date'
+require 'open-uri'
 
 class EmojiCropper < Paperclip::Thumbnail
     def initialize(file, options = {}, attachment = nil)
@@ -33,16 +34,16 @@ class EmojiCropper < Paperclip::Thumbnail
         trans << '-layers "optimize"' if animated?
         trans
     end
-
+    
     def identified_as_png?
-      if @identified_as_png.nil?
-        @identified_as_png = %w(png).include? identify("-format %m :file", :file => "#{@file.path}[0]").to_s.downcase.strip
-      end
-      @identified_as_png
+        if @identified_as_png.nil?
+            @identified_as_png = %w(png).include? identify("-format %m :file", :file => "#{@file.path}[0]").to_s.downcase.strip
+        end
+        @identified_as_png
     rescue Cocaine::ExitStatusError => e
-      raise Paperclip::Error, "There was an error running `identify` for #{@basename}" if @whiny
+        raise Paperclip::Error, "There was an error running `identify` for #{@basename}" if @whiny
     rescue Cocaine::CommandNotFoundError => e
-      raise Paperclip::Errors::CommandNotFoundError.new("Could not run the `identify` command. Please install ImageMagick.")
+        raise Paperclip::Errors::CommandNotFoundError.new("Could not run the `identify` command. Please install ImageMagick.")
     end
 end
 
@@ -165,6 +166,8 @@ def usage
     puts "\thashflags [time]"
     puts "\t\tImport all Twitter promoted hashtag emoji, limited to campaigns"
     puts "\t\tactive at the given date and time, or now if no time is given."
+    puts "\temojipack [path or url]"
+    puts "\t\tImport an \"emojipack\" YAML from the given URL or file path."
     puts "Examples:"
     puts "\timport_emoji.rb --prefix tf --minsize 20x20 steamgame 440"
     puts "\t\tImport Steam emotes for Team Fortress 2, add a \"tf\" prefix to"
@@ -173,7 +176,7 @@ def usage
     puts "\t\tImport Twitch.tv global emotes (but only with alphanumeric"
     puts "\t\tcodes) and make the codes lowercase."
     puts "\timport_emoji.rb --hide files monstrous_specification_0.1.0_png64/emoji/"
-	puts "\t\tImport all emoji from the (downloaded and extracted) Monstrous"
+    puts "\t\tImport all emoji from the (downloaded and extracted) Monstrous"
     puts "\t\tSpecification emoji set, but hide them from the picker."
 end
 
@@ -182,7 +185,7 @@ def import_steam_emote(name)
     secondcolonindex = name.index(":", firstcolonindex+1)
     shortcode = name[firstcolonindex+1, secondcolonindex-firstcolonindex-1]
     uri = URI("http://cdn.steamcommunity.com/economy/emoticon/" + shortcode)
-
+    
     import_emoji(shortcode, uri)
 end
 
@@ -294,11 +297,11 @@ def import_twitchsubscriptions
     userid = usersinfo["users"][0]["_id"]
     
     emoticon_sets = JSON.parse(make_twitch_request(URI("https://api.twitch.tv/kraken/users/#{userid}/emotes")))["emoticon_sets"].values
-
+    
     Paperclip.options[:content_type_mappings] = {
         '0': %w(image/png)
     }
-
+    
     emoticon_sets.each do |emoticon_set|
         emoticon_set.each do |emote|
             shortcode = emote["code"]
@@ -335,15 +338,15 @@ end
 
 def import_slack
     require 'slack-ruby-client'
-
+    
     Slack.configure do |config|
         config.token = ENV['SLACK_API_TOKEN']
         raise 'Missing ENV[SLACK_API_TOKEN]!' unless config.token
     end
-
+    
     client = Slack::Web::Client.new
     emoji = client.emoji_list.emoji
-
+    
     emoji.each do |shortcode, url|
         if url.start_with?("alias:") then
             newShortcode = url[6, url.length-6]
@@ -352,7 +355,6 @@ def import_slack
                 next
             end
         end
-        puts shortcode, url
         import_emoji(shortcode, URI(url))
     end
 end
@@ -392,7 +394,7 @@ def import_mastodon
         usage
         exit
     end
-
+    
     puts "Downloading custom emoji for ", baseuri
     emojiuri = baseuri + "/api/v1/custom_emojis"
     emoji_list = JSON.parse(Net::HTTP.get(emojiuri))
@@ -415,6 +417,33 @@ def import_hashflags
         if search_time >= DateTime.strptime(hashflag["startingTimestampMs"], "%Q") and \
            search_time <= DateTime.strptime(hashflag["endingTimestampMs"], "%Q") then
             import_emoji(hashflag["hashtag"], URI(hashflag["assetUrl"]))
+        end
+    end
+end
+
+def import_emojipack
+    require 'safe_yaml/load'
+    
+    path = ARGV.shift
+    if path === nil then
+        usage
+        exit
+    end
+    
+    url = URI.parse(path) rescue false
+    if url and (url.kind_of?(URI::HTTP) or url.kind_of?(URI::HTTPS) or url.kind_of?(URI::FTP)) then
+        pack = SafeYAML.load(url.open)
+    else
+        pack = SafeYAML.load_file(path)
+    end
+    
+    pack["emojis"].each do |emoji|
+        url = URI(emoji["src"])
+        import_emoji(emoji["name"], url)
+        if emoji["aliases"] then
+            emoji["aliases"].each do |alias_|
+                import_emoji(alias_, url)
+            end
         end
     end
 end
@@ -489,7 +518,10 @@ elsif command == "mastodon" then
     import_mastodon
 elsif command == "hashflags" then
     import_hashflags
+elsif command == "emojipack" then
+    import_emojipack
 else
     puts "Unknown command \"" + command + "\""
     usage
 end
+

@@ -81,6 +81,9 @@
 	Import all Twitter promoted hashtag emoji, limited to campaigns
 	active at the given date and time, or now if no time is given.
 
+`emojipack [path or url]`
+	Import an "emojipack" YAML from the given URL or file path.
+
 ### Examples
 `import_emoji.rb --prefix tf --minsize 20x20 steamgame 440`
 	Import Steam emotes for Team Fortress 2, and add a "tf" prefix to
